@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LinkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +14,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+
+Route::get('/', [LinkController::class, 'index'])->name('link.add');
+Route::get('/all-links', [LinkController::class, 'allLinks'])->name('all.links');
+Route::get('/one/{id?}', [LinkController::class, 'oneLink'])->name('link');
+Route::get('/one/statistic/{id?}', [LinkController::class, 'linkStatistic'])->name('link.statistic');
+Route::get('/l/{custom_code?}', [LinkController::class, 'customLink'])->name('custom.link');
+Route::post('/add', [LinkController::class, 'add'])->name('save.link');
+
+Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
+    return Inertia\Inertia::render('Dashboard');
+})->name('dashboard');
