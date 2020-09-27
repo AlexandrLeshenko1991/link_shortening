@@ -18,13 +18,25 @@ use Illuminate\Http\Request;
 class LinkController extends Controller
 {
     /**
+     * @var EloquentLinkQueries
+     */
+    private $eloquentLinkQueries;
+    /**
+     * @var EloquentLink
+     */
+    private $linkRepository;
+
+    /**
      * Create a new controller instance.
      *
-     * @return void
+     * @param EloquentLinkQueries $eloquentLinkQueries
+     * @param EloquentLink $linkRepository
      */
-    public function __construct()
+    public function __construct(EloquentLinkQueries $eloquentLinkQueries, EloquentLink $linkRepository  )
     {
-        $this->middleware('auth')->except('');
+        $this->middleware('auth')->except('customLink');
+        $this->eloquentLinkQueries = $eloquentLinkQueries;
+        $this->linkRepository = $linkRepository;
     }
     /**
      * @param  Request  $request
@@ -38,9 +50,9 @@ class LinkController extends Controller
     /**
      * @return Factory|View
      */
-    public function allLinks(EloquentLinkQueries $eloquentLinkQueries)
+    public function allLinks()
     {
-        $all_user_link = $eloquentLinkQueries->getUserLink(Auth::user()->id);
+        $all_user_link = $this->eloquentLinkQueries->getUserLink(Auth::user()->id);
         return view('site.link.all', compact('all_user_link'));
     }
 
@@ -51,29 +63,29 @@ class LinkController extends Controller
      * @param Request $request
      * @return Factory|View
      */
-    public function customLink($custom_code, EloquentLinkQueries $eloquentLinkQueries, EloquentLink $linkRepository, Request $request)
+    public function customLink($custom_code, Request $request)
     {
-        $link = $eloquentLinkQueries->getLinkByCode($custom_code);
-        $linkRepository->updateCount($link->id);
+        $link = $this->eloquentLinkQueries->getLinkByCode($custom_code);
+        $this->linkRepository->updateCount($link->id);
 
-        dispatch(new AddStatistic($linkRepository, $link, $request))->afterResponse();
+        dispatch(new AddStatistic($this->linkRepository, $link, $request))->afterResponse();
 
         return redirect()->away($link->original);
     }
 
-    public function oneLink($id, EloquentLinkQueries $eloquentLinkQueries)
+    public function oneLink($id)
     {
-        $link = $eloquentLinkQueries->getById($id);
+        $link = $this->eloquentLinkQueries->getById($id);
 
         if (Auth::user()->id !== $link->user_id) return new Response('Forbidden', 403);
 
         return view('site.link.one', compact('link'));
     }
 
-    public function linkStatistic($id, EloquentLinkQueries $eloquentLinkQueries)
+    public function linkStatistic($id)
     {
-        $link = $eloquentLinkQueries->getById($id);
-        $statistic = $eloquentLinkQueries->getLinkStatistic($link);
+        $link = $this->eloquentLinkQueries->getById($id);
+        $statistic = $this->eloquentLinkQueries->getLinkStatistic($link);
         if (Auth::user()->id !== $link->user_id) return new Response('Forbidden', 403);
 
         return view('site.link.statistic', compact('link', 'statistic'));
@@ -81,7 +93,7 @@ class LinkController extends Controller
 
 
 
-    public function add(Request $request, EloquentLink $linkRepository)
+    public function add(Request $request)
     {
         \Validator::make(
             $request->all(),
@@ -93,7 +105,7 @@ class LinkController extends Controller
         $links = new Links($request->only(['original']));
         $links->user_id = Auth::user()->id;
 
-        $newLink = $linkRepository->save($links);
+        $newLink = $this->linkRepository->save($links);
         $request->session()->flash('add_new_link_success', __('Add new link!'));
 
         return redirect()->route('link', [$newLink->id]);

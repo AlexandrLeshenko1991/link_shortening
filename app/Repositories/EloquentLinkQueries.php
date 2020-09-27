@@ -19,7 +19,7 @@ final class EloquentLinkQueries implements LinkQueries
      */
     //для тестовой задачи ограничил вывод, пагинацию не реализовывал
 
-    public function getUserLink($userId)
+    public function getUserLink($userId) : Links
     {
         return Links::whereUserId($userId)
             ->orderBy('created_at', 'desc')
@@ -34,7 +34,7 @@ final class EloquentLinkQueries implements LinkQueries
 
     public function getLinkByCode($custom_code) : Links
     {
-        return Links::where('custom_code', $custom_code)->first();
+        return Links::where('custom_code', $custom_code)->firstOrFail();
     }
 
     /**
@@ -43,7 +43,7 @@ final class EloquentLinkQueries implements LinkQueries
      */
 
 
-    public function getLinkStatistic($link)
+    public function getLinkStatistic($link): Links
     {
         return $link->statistics()->get();
     }
