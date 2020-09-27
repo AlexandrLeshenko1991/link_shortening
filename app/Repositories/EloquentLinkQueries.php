@@ -43,7 +43,7 @@ final class EloquentLinkQueries implements LinkQueries
      */
 
 
-    public function getLinkStatistic($link): Links
+    public function getLinkStatistic($link)
     {
         return $link->statistics()->get();
     }
