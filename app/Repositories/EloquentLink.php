@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Http;
 
 final class EloquentLink implements LinkRepository
 {
+    private $api_url = 'http://ipwhois.app/json/';
+
     public function save(Links $link): Links
     {
         $link = $this->createNewCustomCode($link);
@@ -28,24 +30,20 @@ final class EloquentLink implements LinkRepository
     public function addStatistic($link, $request)
     {
         $ip = $request->ip();
-        $browser = Browser::browserName();
-        $platform = Browser::platformName();
-        $region = $this->getRegion($ip);
-
-        $statistic = new StatisticLinks([
+        $statistic_model_start = [
             'ip'=> $ip,
-            'browser' => $browser,
-            'os' => $platform,
-            'region' => $region
-        ]);
-
+            'browser' => Browser::browserName(),
+            'os' => Browser::platformName(),
+            'region' => $this->getRegion($ip),
+        ];
+        $statistic = new StatisticLinks($statistic_model_start);
         $link->statistics()->save($statistic);
     }
 
     private function getRegion($ip)
     {
         $region = 'No info';
-        $response = Http::get('http://ipwhois.app/json/'.$ip);
+        $response = Http::get($this->api_url.$ip);
         if ($response->ok()){
             $json = $response->json();
             $region = $json['country']??'No info';
@@ -55,7 +53,7 @@ final class EloquentLink implements LinkRepository
     }
 
     private function createNewCustomCode(Links   $link){
-        $custom_code = strtolower(Str::random(10));
+        $custom_code = strtolower(Str::random(8));
         $link->custom_code = $custom_code;
 
         if ($this->checkUniqueLink($link)){
