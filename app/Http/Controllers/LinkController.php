@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Http\Requests\AddLinkRequest;
 use App\Models\Links;
 use App\Repositories\EloquentLink;
 use App\Repositories\EloquentLinkQueries;
@@ -93,15 +94,8 @@ class LinkController extends Controller
 
 
 
-    public function add(Request $request)
+    public function add(AddLinkRequest $request)
     {
-        \Validator::make(
-            $request->all(),
-            [
-                'original'      => ['required', 'url'],
-            ],
-        )->validate();
-
         $links = new Links($request->only(['original']));
         $links->user_id = Auth::user()->id;
 
